@@ -7,3 +7,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+pages-dist
+output
+outputs
+.playwright-cli
+presentation/web-pre/dist
+presentation/web-pre/public/assets
+presentation/web-pre/public/vendor

@@ -1,0 +1,92 @@
+[
+  {
+    "problem": "Infinite square well",
+    "method": "Finite difference",
+    "level": 1,
+    "numerical": 4.934404339430072,
+    "analytical": 4.934802200544679,
+    "absolute_error": 0.00039786111460671236,
+    "relative_error_percent": 0.008062351811442381
+  },
+  {
+    "problem": "Infinite square well",
+    "method": "Finite difference",
+    "level": 2,
+    "numerical": 19.73284364020156,
+    "analytical": 19.739208802178716,
+    "absolute_error": 0.006365161977157641,
+    "relative_error_percent": 0.03224628728004075
+  },
+  {
+    "problem": "Infinite square well",
+    "method": "Finite difference",
+    "level": 3,
+    "numerical": 44.38100136804195,
+    "analytical": 44.41321980490211,
+    "absolute_error": 0.03221843686016257,
+    "relative_error_percent": 0.07254244795061325
+  },
+  {
+    "problem": "Infinite square well",
+    "method": "Finite difference",
+    "level": 4,
+    "numerical": 78.85503202221508,
+    "analytical": 78.95683520871486,
+    "absolute_error": 0.10180318649977949,
+    "relative_error_percent": 0.1289352419339915
+  },
+  {
+    "problem": "Infinite square well",
+    "method": "Finite difference",
+    "level": 5,
+    "numerical": 123.12158420454132,
+    "analytical": 123.37005501361698,
+    "absolute_error": 0.24847080907565555,
+    "relative_error_percent": 0.20140285180891795
+  },
+  {
+    "problem": "Infinite square well",
+    "method": "Shooting",
+    "level": 1,
+    "numerical": 4.934802200551944,
+    "analytical": 4.934802200544679,
+    "absolute_error": 7.265299473147024e-12,
+    "relative_error_percent": 1.4722574842706192e-10
+  },
+  {
+    "problem": "Infinite square well",
+    "method": "Shooting",
+    "level": 2,
+    "numerical": 19.739208802208008,
+    "analytical": 19.739208802178716,
+    "absolute_error": 2.929212428171013e-11,
+    "relative_error_percent": 1.4839563518106668e-10
+  },
+  {
+    "problem": "Infinite square well",
+    "method": "Shooting",
+    "level": 3,
+    "numerical": 44.413219804970545,
+    "analytical": 44.41321980490211,
+    "absolute_error": 6.843237088105525e-11,
+    "relative_error_percent": 1.5408108482488816e-10
+  },
+  {
+    "problem": "Harmonic oscillator",
+    "method": "Finite difference",
+    "level": 0,
+    "numerical": 0.4996934695327832,
+    "analytical": 0.5,
+    "absolute_error": 0.00030653046721679233,
+    "relative_error_percent": 0.06130609344335847
+  },
+  {
+    "problem": "Harmonic oscillator",
+    "method": "Shooting",
+    "level": 0,
+    "numerical": 0.5000000000775513,
+    "analytical": 0.5,
+    "absolute_error": 7.755129871611643e-11,
+    "relative_error_percent": 1.5510259743223287e-08
+  }
+]

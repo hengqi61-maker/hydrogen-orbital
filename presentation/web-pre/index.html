@@ -1,0 +1,899 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ffffff" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <title>量子本征值问题：数值方法与中心势解析结构</title>
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <section data-slide="matrix">
+          <div class="kicker">FINITE DIFFERENCE · DISCRETIZATION</div>
+          <h1>空间离散后，薛定谔方程成为 <span class="blue">100×100</span> 矩阵本征值问题。</h1>
+
+          <div class="grid matrix-layout">
+            <div>
+              <div class="section-label">01 · 连续问题与边界</div>
+              <div class="formula left">
+                \[
+                -\frac{\hbar^2}{2m}\frac{\mathrm d^2\psi}{\mathrm dx^2}
+                +V(x)\psi=E\psi,\qquad \hbar=m=1
+                \]
+                \[
+                \psi(0)=\psi(L)=0,\quad x_i=i\Delta x,\quad
+                \Delta x=\frac{L}{N+1}=\frac{1}{101}
+                \]
+              </div>
+
+              <div class="section-label">02 · 中心差分</div>
+              <div class="formula left compact">
+                \[
+                \left.\frac{\mathrm d^2\psi}{\mathrm dx^2}\right|_{x_i}
+                \approx\frac{\psi_{i+1}-2\psi_i+\psi_{i-1}}{\Delta x^2}
+                \]
+                \[
+                -\frac{\psi_{i-1}}{2\Delta x^2}
+                +\left(\frac{1}{\Delta x^2}+V_i\right)\psi_i
+                -\frac{\psi_{i+1}}{2\Delta x^2}=E\psi_i
+                \]
+              </div>
+              <div class="accent-rule"></div>
+              <p class="muted">每个网格点只与左右相邻点耦合，因此矩阵天然是三对角结构。</p>
+            </div>
+
+            <div class="panel matrix-panel">
+              <div class="section-label">03 · HAMILTONIAN MATRIX</div>
+              <div class="panel-heading">无限深势阱内部　\(V_i=0\)</div>
+              <div class="metric-row">
+                <div class="metric">
+                  <span>主对角元</span>
+                  <strong>\(\frac{1}{\Delta x^2}=10201\)</strong>
+                </div>
+                <div class="metric orange">
+                  <span>相邻对角元</span>
+                  <strong>\(-\frac{1}{2\Delta x^2}=-5100.5\)</strong>
+                </div>
+              </div>
+              <div class="formula matrix">
+                \[
+                H=\begin{bmatrix}
+                10201 & -5100.5 & 0 & \cdots & 0\\
+                -5100.5 & 10201 & -5100.5 & \cdots & 0\\
+                0 & -5100.5 & 10201 & \ddots & \vdots\\
+                \vdots & \vdots & \ddots & \ddots & -5100.5\\
+                0 & 0 & \cdots & -5100.5 & 10201
+                \end{bmatrix}
+                \]
+              </div>
+              <div class="eigen-caption">
+                <div class="formula">\(H\boldsymbol{\psi}=E\boldsymbol{\psi}\)</div>
+                <div><strong>本征值 \(E\)：允许能量</strong><br><span class="muted">本征向量 \(\boldsymbol{\psi}\)：离散波函数</span></div>
+              </div>
+            </div>
+          </div>
+          <aside class="notes">
+            N=100 指一百个内部未知点，因此步长是 1/101。中心差分使每一行只有三个非零系数，于是连续微分方程转化成三对角矩阵本征值问题。
+          </aside>
+        </section>
+
+        <section data-slide="eigenvalues">
+          <div class="kicker">EIGENVALUE VALIDATION</div>
+          <h1>没有代入解析能量公式，矩阵仍复现了最低五个能级。</h1>
+          <div class="grid results-layout">
+            <div>
+              <div class="section-label">能量随量子数增长</div>
+              <div class="chart-frame tall">
+                <img src="./assets/energy-levels.svg" alt="前五个能级差分解与解析解对比" />
+              </div>
+              <p class="chart-note">两条曲线在能量尺度上几乎重合，但差分结果始终略低。</p>
+            </div>
+            <div>
+              <table class="data-table">
+                <thead><tr><th>\(n\)</th><th>差分解</th><th>解析解</th><th>相对误差</th></tr></thead>
+                <tbody>
+                  <tr><td>1</td><td>4.934404</td><td>4.934802</td><td>−0.00806%</td></tr>
+                  <tr><td>2</td><td>19.732844</td><td>19.739209</td><td>−0.03225%</td></tr>
+                  <tr><td>3</td><td>44.381001</td><td>44.413220</td><td>−0.07254%</td></tr>
+                  <tr><td>4</td><td>78.855032</td><td>78.956835</td><td>−0.12894%</td></tr>
+                  <tr><td>5</td><td>123.121584</td><td>123.370055</td><td>−0.20140%</td></tr>
+                </tbody>
+              </table>
+              <div class="verify-block">
+                <div class="formula">\[E_n=\frac{n^2\pi^2}{2L^2}\]</div>
+                <strong>解析公式只用于计算完成后的验证</strong>
+              </div>
+              <div class="code-strip">eigh_tridiagonal(..., select_range=(0, 4)) → 只求最低五个本征值</div>
+            </div>
+          </div>
+          <aside class="notes">
+            求解器只读取三对角矩阵，并返回最低五个本征值。解析公式在计算完成后才用于核对。高能级波函数振荡更快，所以误差随 n 增大。
+          </aside>
+        </section>
+
+        <section data-slide="error">
+          <div class="kicker">ERROR & CONVERGENCE</div>
+          <h1>离散误差按 <span class="blue">\(\Delta x^2\)</span> 收敛，但高能级会放大误差。</h1>
+          <div class="grid error-layout">
+            <div>
+              <div class="section-label">误差从哪里来？</div>
+              <p class="muted">中心差分不等于真实二阶导数，而是泰勒展开的二阶近似：</p>
+              <div class="formula left compact">
+                \[
+                \frac{\psi_{i+1}-2\psi_i+\psi_{i-1}}{\Delta x^2}
+                =\psi''(x_i)+\frac{\Delta x^2}{12}\psi^{(4)}(x_i)+O(\Delta x^4)
+                \]
+              </div>
+              <div class="error-order">
+                <div><span>主误差阶</span><strong>\(O(\Delta x^2)\)</strong></div>
+                <b>\(N\) 近似加倍　→　\(\Delta x\) 减半　→　误差约降为 \(1/4\)</b>
+              </div>
+              <div class="section-label">无限深势阱的离散能级</div>
+              <div class="formula left compact">
+                \[
+                E_n^{\mathrm{FD}}=\frac{2}{\Delta x^2}
+                \sin^2\!\left(\frac{n\pi}{2(N+1)}\right)
+                \]
+                \[
+                \frac{E_n^{\mathrm{FD}}-E_n}{E_n}
+                \approx-\frac{n^2\pi^2}{12L^2}\Delta x^2
+                \]
+              </div>
+              <div class="micro-points">
+                <span>负号：差分能量略低于解析值</span>
+                <span>\(n^2\)：高能级误差更容易放大</span>
+              </div>
+            </div>
+            <div>
+              <div class="section-label">真实计算的双对数收敛图</div>
+              <div class="chart-frame convergence">
+                <img src="./assets/convergence.svg" alt="误差随网格步长二阶收敛" />
+              </div>
+              <div class="takeaway">同一 \(\Delta x\) 下，\(n=5\) 的误差始终更大：高能级波函数振荡更快，有限网格更难准确描述其曲率。</div>
+            </div>
+          </div>
+          <aside class="notes">
+            中心差分的首个被舍弃项正比于步长平方，所以网格数加倍时误差约缩小为四分之一。相对误差还正比于 n 的平方。
+          </aside>
+        </section>
+
+        <section data-slide="shooting-principle">
+          <div class="kicker">SHOOTING METHOD · BOUNDARY HIT</div>
+          <h1>不建矩阵，而是调节能量直到波函数<span class="blue">打中边界</span>。</h1>
+          <div class="grid shooting-principle-layout">
+            <div>
+              <div class="section-label">01 · 把本征值问题改写成初值问题</div>
+              <p>单位取 \(\hbar=m=1\)，势阱内部 \(V(x)=0\)，边界满足 \(\psi(0)=\psi(L)=0\)。</p>
+              <div class="formula boxed">\[-\frac12\psi''(x)+V(x)\psi(x)=E\psi(x)\]</div>
+              <p>令 \(y_1=\psi,\ y_2=\psi'\)，把二阶方程转化为一阶初值问题：</p>
+              <div class="formula boxed">
+                \[
+                \begin{cases}
+                y_1'=y_2\\
+                y_2'=2[V(x)-E]y_1
+                \end{cases}
+                \]
+              </div>
+              <p>初值不能全为零；斜率只负责固定非零振幅：</p>
+              <div class="formula boxed">\[\psi(0)=0,\qquad \psi'(0)=1\]</div>
+              <p class="muted">求得的 \(\psi_E(x)\) 最后再归一化，因此初始斜率不会改变允许能量。</p>
+            </div>
+            <div>
+              <div class="section-label">02 · 每个猜测能量都会给出一个右端残差</div>
+              <div class="chart-frame shooting-static">
+                <img src="./assets/shooting-boundary.svg" alt="不同能量对应的波函数右端残差" />
+              </div>
+              <p class="center-note">多数 \(E\) 积分到右端点时打不中边界；只有特定能量让 \(\psi_E(L)=0\)。</p>
+              <div class="takeaway">打靶法的核心：把本征值条件转化成“右端边界残差为零”的求根问题。</div>
+            </div>
+          </div>
+          <aside class="notes">
+            打靶法不构造矩阵，而是给定一个能量，从左边界积分到右边界。初始斜率选 1 只是避免平凡解，不会改变允许能量。
+          </aside>
+        </section>
+
+        <section data-slide="root-finding">
+          <div class="kicker">ROOT FINDING · EIGENVALUE SEARCH</div>
+          <h1>打靶法把量子化条件变成一个<span class="blue">求根问题</span>。</h1>
+          <div class="grid root-layout">
+            <div>
+              <div class="section-label">残差函数：右边界是否命中？</div>
+              <div class="formula boxed">\[F(E)=\psi_E(L),\qquad F(E)=0\]</div>
+              <div class="chart-frame residual-chart">
+                <img src="./assets/residual-function.svg" alt="残差函数过零点与前三个本征值" />
+              </div>
+              <p class="muted">每一个过零点对应一个允许能量；本题中 \(E_n=n^2\pi^2/2\) 与数值零点一致。</p>
+            </div>
+            <div>
+              <div class="section-label">数值流程</div>
+              <div class="flow-line">猜测 E　→　ODE 积分　→　计算 F(E)　→　Brent 求根</div>
+              <p>从一个能量区间出发，只要残差 \(F(E)\) 在区间两端变号，就可以用 Brent 法稳定找到零点。</p>
+              <div class="section-label table-label">前三个能级：打靶法 vs 解析解</div>
+              <table class="data-table shooting-table">
+                <thead><tr><th>n</th><th>打靶法</th><th>解析解</th><th>绝对误差</th></tr></thead>
+                <tbody>
+                  <tr><td>1</td><td>4.934802200552</td><td>4.934802200545</td><td>7.27×10⁻¹²</td></tr>
+                  <tr><td>2</td><td>19.739208802208</td><td>19.739208802179</td><td>2.93×10⁻¹¹</td></tr>
+                  <tr><td>3</td><td>44.413219804971</td><td>44.413219804902</td><td>6.84×10⁻¹¹</td></tr>
+                </tbody>
+              </table>
+              <div class="takeaway">关键困难：打靶法不能一次性得到所有能级，需要逐个寻找 \(F(E)\) 的零点。</div>
+            </div>
+          </div>
+          <aside class="notes">
+            定义 F(E) 为积分到右端后的波函数值。只要找到 F(E) 的零点，就找到了同时满足两端边界条件的允许能量。
+          </aside>
+        </section>
+
+        <section data-slide="interactive" id="interactive-slide">
+          <div class="kicker">LIVE DEMO · RESIDUAL FUNCTION</div>
+          <h1>现在直接调节 \(E\)，观察波函数如何命中右边界。</h1>
+
+          <div class="demo-labels">
+            <div><strong>波函数打靶区</strong><span>给定 \(E\) 后，用 RK4 得到 \(\psi_E(x)\)</span></div>
+            <div><strong>残差函数求根区</strong><span>当前点为 \(F(E)=\psi_E(L)\)</span></div>
+          </div>
+          <div id="shooting-demo" class="shooting-demo">
+            <canvas id="shooting-canvas" aria-label="打靶法波函数和残差函数互动图"></canvas>
+            <div id="shooting-fallback" class="shooting-fallback" hidden></div>
+          </div>
+
+          <div class="demo-controls">
+            <div class="readout">
+              <div><span>当前能量</span><strong id="energy-value">E = --</strong></div>
+              <div><span>右端残差</span><strong id="residual-value">F(E) = --</strong></div>
+              <div><span>状态</span><strong id="hit-status">--</strong></div>
+            </div>
+            <div class="control-rail">
+              <button id="play-pause" type="button">Play</button>
+              <button id="reset-demo" type="button" class="secondary">Reset</button>
+              <label>Energy E<input id="energy-slider" type="range" min="0.2" max="50" step="0.01" value="3.2" /></label>
+              <div class="shortcut-hint"><b>A / D</b><span>微调能量</span></div>
+            </div>
+            <div class="snap-rail">
+              <button type="button" data-eigen="1">Snap E₁</button>
+              <button type="button" data-eigen="2">Snap E₂</button>
+              <button type="button" data-eigen="3">Snap E₃</button>
+            </div>
+          </div>
+          <div class="demo-footer">
+            <span>\(\psi(0)=0,\ \psi'(0)=1\)</span>
+            <span>\(y_1'=y_2,\ y_2'=2[V(x)-E]y_1\)</span>
+            <span><b>1/2/3</b> 跳转能级　<b>P</b> 播放　<b>R</b> 重置</span>
+            <a
+              class="demo-link"
+              href="https://hengqi61-maker.github.io/hydrogen-orbital/pre/#/5"
+              target="_blank"
+              rel="noopener"
+            >独立打开互动页 ↗</a>
+          </div>
+          <aside class="notes">
+            先停在一个未命中的能量，指出左图波函数末端偏离零线，右图当前点也不在横轴上。拖动滑块或按 A/D 改变能量，再按 1、2、3 命中前三个本征值。右下角链接可以在新窗口独立打开互动页。
+          </aside>
+        </section>
+
+        <section data-slide="comparison">
+          <div class="kicker">METHOD COMPARISON · CROSS VALIDATION</div>
+          <h1>两种方法得到一致能级，但<span class="orange-text">误差机制</span>完全不同。</h1>
+          <div class="grid comparison-layout">
+            <div>
+              <div class="section-label">前三个本征值的绝对误差</div>
+              <div class="chart-frame comparison-chart">
+                <img src="./assets/error-comparison.svg" alt="差分法与打靶法的绝对误差量级对比" />
+              </div>
+              <p class="chart-note">纵轴为对数尺度：打靶法在本题中接近积分与求根精度极限。</p>
+              <div class="formula boxed">\[E_n=\frac{n^2\pi^2}{2L^2},\qquad \varphi_n(x)=\sqrt{\frac{2}{L}}\sin(n\pi x)\]</div>
+            </div>
+            <div>
+              <div class="section-label">差分法 vs 打靶法</div>
+              <table class="comparison-table">
+                <thead><tr><th>对比项</th><th>差分法</th><th>打靶法</th></tr></thead>
+                <tbody>
+                  <tr><td>数学形式</td><td>\(H\psi=E\psi\)</td><td>\(F(E)=\psi_E(L)=0\)</td></tr>
+                  <tr><td>求解方式</td><td>一次求多个本征值</td><td>逐个扫描与求根</td></tr>
+                  <tr><td>主要误差</td><td>\(O(\Delta x^2)\)</td><td>ODE 积分 + 根搜索容差</td></tr>
+                  <tr><td>物理图像</td><td>相邻网格点耦合</td><td>边界条件筛选能量</td></tr>
+                </tbody>
+              </table>
+              <div class="takeaway comparison-takeaway">同一个物理问题，用两种不同数值思路得到一致结果，就是对程序与结论的交叉验证。</div>
+            </div>
+          </div>
+          <aside class="notes">
+            差分法和打靶法的误差来源完全不同，却给出了相同能级。这个交叉验证比单独对比解析公式更能说明程序与结论可靠。
+          </aside>
+        </section>
+
+        <section data-slide="central-transition">
+          <div class="kicker">FROM 1D TO CENTRAL POTENTIALS</div>
+          <h1>从一维边界筛选能量，走向三维对称性分解本征态。</h1>
+          <div class="central-transition-layout">
+            <div class="problem-card one-dimensional">
+              <span class="problem-index">前半部分</span>
+              <h2>一维无限深势阱</h2>
+              <div class="formula">\[V(x),\qquad \psi(x)\]</div>
+              <p>边界条件把连续能量猜测筛选为离散本征值。</p>
+              <div class="formula result-formula">\[F(E)=\psi_E(L)=0\]</div>
+            </div>
+            <div class="transition-arrow">
+              <span>维度提升</span>
+              <b>→</b>
+              <span>利用球对称性</span>
+            </div>
+            <div class="problem-card central-potential">
+              <span class="problem-index">后半部分</span>
+              <h2>三维中心势场</h2>
+              <div class="formula">\[V(r),\qquad \psi(r,\theta,\phi)\]</div>
+              <p>对称性把三维问题拆成径向与角向两个本征问题。</p>
+              <div class="formula result-formula">\[\psi_{nlm}=R_{nl}(r)Y_l^m(\theta,\phi)\]</div>
+            </div>
+          </div>
+          <div class="analysis-roadmap">
+            <div><b>01</b><span>分离变量</span><small>球坐标与角动量</small></div>
+            <i>→</i>
+            <div><b>02</b><span>角向解析</span><small>关联勒让德多项式</small></div>
+            <i>→</i>
+            <div><b>03</b><span>径向解析</span><small>关联拉盖尔多项式</small></div>
+            <i>→</i>
+            <div><b>04</b><span>量子化</span><small>\(n,l,m\) 与离散能级</small></div>
+          </div>
+          <aside class="notes">
+            前七页回答的是怎样从薛定谔方程数值寻找允许能量。接下来不直接背氢原子结果，而是从三维中心势的对称性出发，追踪勒让德和拉盖尔多项式为什么出现。
+          </aside>
+        </section>
+
+        <section data-slide="separation">
+          <div class="kicker">CENTRAL POTENTIAL · SEPARATION</div>
+          <h1>中心势只依赖 \(r\)，因此球坐标把三维方程拆成两个问题。</h1>
+          <div class="grid separation-layout">
+            <div>
+              <div class="section-label">三维定态薛定谔方程</div>
+              <div class="formula boxed large-formula">
+                \[
+                \left[-\frac{\hbar^2}{2\mu}\nabla^2+V(r)\right]
+                \psi(r,\theta,\phi)=E\psi(r,\theta,\phi)
+                \]
+              </div>
+              <div class="section-label separation-step-label">分离变量假设</div>
+              <div class="formula boxed large-formula">
+                \[
+                \psi(r,\theta,\phi)=R(r)Y(\theta,\phi)
+                \]
+              </div>
+              <p class="muted separation-copy">这里不是近似：只要势能具有严格球对称性，径向变量与角变量就可以完全分离。</p>
+            </div>
+            <div class="operator-panel">
+              <div class="section-label">关键算符分解</div>
+              <div class="formula compact">
+                \[
+                \nabla^2=
+                \frac{1}{r^2}\frac{\partial}{\partial r}
+                \left(r^2\frac{\partial}{\partial r}\right)
+                -\frac{\hat L^2}{\hbar^2r^2}
+                \]
+              </div>
+              <div class="operator-split">
+                <div>
+                  <span>径向算符</span>
+                  <strong>\(\displaystyle \frac{1}{r^2}\frac{\mathrm d}{\mathrm dr}
+                  \left(r^2\frac{\mathrm d}{\mathrm dr}\right)\)</strong>
+                  <small>决定离核距离与径向节点</small>
+                </div>
+                <div>
+                  <span>角动量算符</span>
+                  <strong>\(\hat L^2Y=l(l+1)\hbar^2Y\)</strong>
+                  <small>决定角向形状与量子数 \(l,m\)</small>
+                </div>
+              </div>
+              <div class="takeaway">同一个分离常数 \(l(l+1)\hbar^2\) 同时进入角向方程和径向有效势，把两部分连接起来。</div>
+            </div>
+          </div>
+          <aside class="notes">
+            球坐标不是为了形式好看，而是因为 V 只依赖 r。拉普拉斯算符中角向部分恰好由 L 平方表示，分离常数随后成为角量子数 l。
+          </aside>
+        </section>
+
+        <section data-slide="phi-equation">
+          <div class="kicker">AZIMUTHAL EQUATION · MAGNETIC QUANTUM NUMBER</div>
+          <h1>\(\phi\) 方向的周期边界条件，首先把 \(m\) 限制为整数。</h1>
+          <div class="grid phi-layout">
+            <div>
+              <div class="section-label">方位角方程</div>
+              <div class="formula boxed">
+                \[
+                \frac{\mathrm d^2\Phi}{\mathrm d\phi^2}+m^2\Phi=0
+                \]
+              </div>
+              <div class="formula boxed">
+                \[
+                \Phi_m(\phi)=\frac{1}{\sqrt{2\pi}}e^{im\phi}
+                \]
+              </div>
+              <div class="periodicity-block">
+                <span>波函数必须单值</span>
+                <div class="formula">\[\Phi(\phi+2\pi)=\Phi(\phi)\]</div>
+                <strong>\[e^{i2\pi m}=1\quad\Longrightarrow\quad m=0,\pm1,\pm2,\ldots\]</strong>
+              </div>
+            </div>
+            <div>
+              <div class="phase-wheel" aria-label="复相位绕单位圆旋转">
+                <div class="phase-axis horizontal"></div>
+                <div class="phase-axis vertical"></div>
+                <div class="phase-radius"></div>
+                <div class="phase-dot"></div>
+                <span class="phase-one">1</span>
+                <span class="phase-i">i</span>
+                <span class="phase-minus-one">−1</span>
+                <span class="phase-minus-i">−i</span>
+                <b>\(e^{im\phi}\)</b>
+              </div>
+              <div class="phase-explanation">
+                <div><b>\(m\)</b><span>相位绕 \(z\) 轴变化的圈数与方向</span></div>
+                <div><b>\(\hat L_z\)</b><span>\(\hat L_zY_l^m=m\hbar Y_l^m\)</span></div>
+                <div><b>\(|\Phi_m|^2\)</b><span>恒为 \(1/(2\pi)\)，单独的复基底概率密度轴对称</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="takeaway phi-takeaway">量子数 \(m\) 不是人为编号，而是由绕 \(z\) 轴一周后波函数必须回到同一值这一周期边界条件产生。</div>
+          <aside class="notes">
+            方位角解是复指数。波函数绕 z 轴转一整圈后必须单值，因此 m 只能取整数。m 同时是 Lz 的本征值标签。
+          </aside>
+        </section>
+
+        <section data-slide="legendre">
+          <div class="kicker">POLAR EQUATION · ASSOCIATED LEGENDRE</div>
+          <h1>\(\theta\) 方程的极点正则性，产生关联勒让德多项式。</h1>
+          <div class="grid legendre-layout">
+            <div>
+              <div class="section-label">极角微分方程</div>
+              <div class="formula boxed legendre-equation">
+                \[
+                \frac{1}{\sin\theta}\frac{\mathrm d}{\mathrm d\theta}
+                \left(\sin\theta\frac{\mathrm d\Theta}{\mathrm d\theta}\right)
+                +\left[l(l+1)-\frac{m^2}{\sin^2\theta}\right]\Theta=0
+                \]
+              </div>
+              <div class="variable-change">
+                <span>变量代换</span>
+                <div class="formula">\[x=\cos\theta\]</div>
+                <b>→</b>
+                <div class="formula">\[
+                  (1-x^2)y''-2xy'
+                  +\left[l(l+1)-\frac{m^2}{1-x^2}\right]y=0
+                \]</div>
+              </div>
+              <div class="regularity-card">
+                <strong>为什么不是任意解？</strong>
+                <p>在 \(\theta=0,\pi\) 即 \(x=\pm1\) 两个极点处，角向波函数必须保持有限。正则性要求：</p>
+                <div class="formula">\[\Theta(\theta)\propto P_l^m(\cos\theta),\qquad |m|\le l\]</div>
+              </div>
+            </div>
+            <div>
+              <div class="section-label">低阶函数直接展示角向节点</div>
+              <div class="chart-frame legendre-chart">
+                <img src="./assets/legendre-family.svg" alt="勒让德多项式与关联勒让德函数" />
+              </div>
+              <div class="micro-points">
+                <span>\(l\)：控制角向节点总数与角动量大小</span>
+                <span>\(|m|\)：控制极点附近的零点阶数</span>
+              </div>
+            </div>
+          </div>
+          <aside class="notes">
+            把 cos theta 记为 x 后，方程变成关联勒让德方程。真正产生离散 l 的条件是两个极点处不能发散，而不是先假定 l 是整数。
+          </aside>
+        </section>
+
+        <section data-slide="spherical-harmonics">
+          <div class="kicker">SPHERICAL HARMONICS · ANGULAR STRUCTURE</div>
+          <h1>球谐函数把勒让德角向形状与方位相位组合起来。</h1>
+          <div class="grid harmonics-layout">
+            <div>
+              <div class="formula boxed harmonic-master">
+                \[
+                \begin{aligned}
+                Y_l^m(\theta,\phi)
+                &=\sqrt{\frac{2l+1}{4\pi}\frac{(l-m)!}{(l+m)!}}\,
+                P_l^m(\cos\theta)e^{im\phi},\qquad m\ge0,\\
+                Y_l^{-m}&=(-1)^m\!\left[Y_l^m\right]^*
+                \end{aligned}
+                \]
+              </div>
+              <div class="factor-table">
+                <div><b>\(P_l^m(\cos\theta)\)</b><span>控制极角方向的节点与形状</span></div>
+                <div><b>\(e^{im\phi}\)</b><span>控制绕 \(z\) 轴的复相位变化</span></div>
+                <div><b>\(N_{lm}\)</b><span>保证 \(\int |Y_l^m|^2\,\mathrm d\Omega=1\)</span></div>
+              </div>
+              <div class="formula quantum-range">
+                \[
+                l=0,1,2,\ldots,\qquad m=-l,-l+1,\ldots,l
+                \]
+              </div>
+              <div class="takeaway">对任意中心势，角向解都相同；势能的具体形式只会改变径向函数和能量。</div>
+            </div>
+            <div class="orbital-pair">
+              <figure>
+                <img src="./assets/orbitals/2pz.png" alt="2p z 氢原子电子云" />
+                <figcaption><b>\(l=1,m=0\)</b><span>一个角向节点：\(xy\) 平面</span></figcaption>
+              </figure>
+              <figure>
+                <img src="./assets/orbitals/3dz2.png" alt="3d z2 氢原子电子云" />
+                <figcaption><b>\(l=2,m=0\)</b><span>两个角向节点：圆锥面</span></figcaption>
+              </figure>
+              <p>图像来自现有 Three.js 项目真实采样；这里展示的是 \(|\psi|^2\)，不是经典轨迹。</p>
+            </div>
+          </div>
+          <aside class="notes">
+            球谐函数由关联勒让德函数和方位相位组成。无论中心势是库仑势还是其他 V(r)，角向基底都由同一组 Ylm 给出。
+          </aside>
+        </section>
+
+        <section data-slide="radial-equation">
+          <div class="kicker">RADIAL EQUATION · EFFECTIVE POTENTIAL</div>
+          <h1>令 \(u=rR\) 后，三维径向问题重新变成一维本征值方程。</h1>
+          <div class="grid radial-layout">
+            <div>
+              <div class="section-label">原始径向方程</div>
+              <div class="formula boxed radial-equation">
+                \[
+                -\frac{\hbar^2}{2\mu r^2}\frac{\mathrm d}{\mathrm dr}
+                \left(r^2\frac{\mathrm dR}{\mathrm dr}\right)
+                +\left[V(r)+\frac{\hbar^2l(l+1)}{2\mu r^2}\right]R=ER
+                \]
+              </div>
+              <div class="substitution-row">
+                <div class="formula">\[u(r)=rR(r)\]</div>
+                <b>→</b>
+                <div class="formula">\[
+                -\frac{\hbar^2}{2\mu}\frac{\mathrm d^2u}{\mathrm dr^2}
+                +V_{\mathrm{eff}}(r)u=Eu
+                \]</div>
+              </div>
+              <div class="effective-definition">
+                <span>有效势</span>
+                <div class="formula">\[
+                V_{\mathrm{eff}}(r)=V(r)+
+                \underbrace{\frac{\hbar^2l(l+1)}{2\mu r^2}}_{\text{离心势垒}}
+                \]</div>
+              </div>
+              <p class="muted">这正是前半部分差分法和打靶法可以继续处理的一维形式，只是定义域变成 \(r\ge0\)。</p>
+            </div>
+            <div>
+              <div class="section-label">库仑势中的离心势垒</div>
+              <div class="chart-frame effective-chart">
+                <img src="./assets/effective-potential.svg" alt="不同角量子数的库仑有效势" />
+              </div>
+              <div class="takeaway">\(l>0\) 时，\(1/r^2\) 势垒抑制波函数靠近原点；因此角动量会直接改变径向分布。</div>
+            </div>
+          </div>
+          <aside class="notes">
+            u 等于 rR 的代换消掉了一阶导数，使径向方程与一维薛定谔方程同形。新增的离心势垒来自角动量分离常数。
+          </aside>
+        </section>
+
+        <section data-slide="coulomb-asymptotics">
+          <div class="kicker">COULOMB POTENTIAL · ASYMPTOTIC STRUCTURE</div>
+          <h1>先处理原点与无穷远，剩下的部分才由拉盖尔多项式描述。</h1>
+          <div class="grid asymptotic-layout">
+            <div>
+              <div class="section-label">氢原子库仑势</div>
+              <div class="formula boxed large-formula">
+                \[
+                V(r)=-\frac{e^2}{4\pi\varepsilon_0r},\qquad
+                \rho=\frac{2r}{na_0}
+                \]
+              </div>
+              <div class="formula boxed large-formula">
+                \[
+                R_{nl}(\rho)=e^{-\rho/2}\rho^l\,v(\rho)
+                \]
+              </div>
+              <p class="muted">这个分解不是猜最终答案，而是先提取微分方程在两个极限处必须满足的行为。</p>
+            </div>
+            <div class="asymptotic-factors">
+              <div>
+                <span class="factor-number">01</span>
+                <div class="formula">\[e^{-\rho/2}\]</div>
+                <strong>无穷远衰减</strong>
+                <p>束缚态在 \(r\to\infty\) 时必须趋于零并可归一化。</p>
+              </div>
+              <div>
+                <span class="factor-number">02</span>
+                <div class="formula">\[\rho^l\]</div>
+                <strong>原点正则</strong>
+                <p>抵消离心项要求的近原点行为，使 \(R(r)\) 保持有限。</p>
+              </div>
+              <div>
+                <span class="factor-number">03</span>
+                <div class="formula">\[v(\rho)\]</div>
+                <strong>节点结构</strong>
+                <p>剩余方程决定有限半径内的振荡与径向节点。</p>
+              </div>
+            </div>
+          </div>
+          <div class="takeaway asymptotic-takeaway">先由物理边界条件固定指数因子与幂次因子，再求剩余函数，这是径向解析解的核心策略。</div>
+          <aside class="notes">
+            无穷远处库仑势消失，束缚态必须指数衰减；原点附近离心项占主导，正则解表现为 r 的 l 次方。提取这两部分后才出现拉盖尔方程。
+          </aside>
+        </section>
+
+        <section data-slide="laguerre">
+          <div class="kicker">RADIAL QUANTIZATION · ASSOCIATED LAGUERRE</div>
+          <h1>级数必须终止为拉盖尔多项式，归一化条件由此量子化能量。</h1>
+          <div class="grid laguerre-layout">
+            <div>
+              <div class="section-label">剩余函数满足关联拉盖尔方程</div>
+              <div class="formula boxed laguerre-equation">
+                \[
+                \rho v''+(2l+2-\rho)v'+(n-l-1)v=0
+                \]
+              </div>
+              <div class="series-warning">
+                <strong>如果级数不终止</strong>
+                <p>\(v(\rho)\) 的高阶项会抵消前面的 \(e^{-\rho/2}\)，使波函数在无穷远发散，无法归一化。</p>
+              </div>
+              <div class="termination-flow">
+                <div>\(n-l-1=0,1,2,\ldots\)</div>
+                <b>→</b>
+                <div>\(v(\rho)=L_{n-l-1}^{2l+1}(\rho)\)</div>
+              </div>
+              <div class="node-count">
+                <span>径向节点数</span>
+                <strong>\[N_r=n-l-1\]</strong>
+              </div>
+            </div>
+            <div>
+              <div class="section-label">真实径向概率分布</div>
+              <div class="chart-frame radial-probability-chart">
+                <img src="./assets/radial-probability.svg" alt="氢原子径向概率分布与节点" />
+              </div>
+              <div class="takeaway">拉盖尔多项式不是附加的数学装饰：它既保证级数终止，也直接决定径向节点数。</div>
+            </div>
+          </div>
+          <aside class="notes">
+            归一化要求剩余幂级数终止，因此 n 减 l 减 1 必须是非负整数。终止后的函数就是关联拉盖尔多项式，阶数也等于径向节点数。
+          </aside>
+        </section>
+
+        <section data-slide="complete-wavefunction">
+          <div class="kicker">HYDROGEN EIGENSTATE · COMPLETE STRUCTURE</div>
+          <h1>完整氢原子波函数：角向由勒让德控制，径向由拉盖尔控制。</h1>
+          <div class="formula boxed complete-formula">
+            \[
+            \psi_{nlm}(r,\theta,\phi)=
+            \mathcal N_{nlm}\,
+            \underbrace{e^{-\rho/2}}_{\text{远处衰减}}
+            \underbrace{\rho^l}_{\text{原点正则}}
+            \underbrace{L_{n-l-1}^{2l+1}(\rho)}_{\text{径向节点}}
+            \underbrace{P_l^m(\cos\theta)e^{im\phi}}_{\text{角向结构}}
+            \]
+          </div>
+          <div class="wavefunction-factor-strip">
+            <div><b>主量子数 \(n\)</b><span>能量、尺度、总节点数</span></div>
+            <div><b>角量子数 \(l\)</b><span>角动量与角向节点</span></div>
+            <div><b>磁量子数 \(m\)</b><span>\(L_z\) 本征值与复球谐基底</span></div>
+          </div>
+          <div class="orbital-strip">
+            <figure><img src="./assets/orbitals/1s.png" alt="1s 电子云" /><figcaption>1s<br><span>\(N_r=0,N_\Omega=0\)</span></figcaption></figure>
+            <figure><img src="./assets/orbitals/2pz.png" alt="2pz 电子云" /><figcaption>2p<sub>z</sub><br><span>\(N_r=0,N_\Omega=1\)</span></figcaption></figure>
+            <figure><img src="./assets/orbitals/3pz.png" alt="3pz 电子云" /><figcaption>3p<sub>z</sub><br><span>\(N_r=1,N_\Omega=1\)</span></figcaption></figure>
+            <figure><img src="./assets/orbitals/3dz2.png" alt="3dz2 电子云" /><figcaption>3d<sub>z²</sub><br><span>\(N_r=0,N_\Omega=2\)</span></figcaption></figure>
+          </div>
+          <aside class="notes">
+            这页把整个解析结构合并。指数和幂次来自边界行为，拉盖尔多项式控制径向节点，关联勒让德和复指数控制角向结构。
+          </aside>
+        </section>
+
+        <section data-slide="hydrogen-energy">
+          <div class="kicker">ENERGY LEVELS · QUANTUM NUMBERS</div>
+          <h1>库仑势能量只依赖 \(n\)，而 \(l,m\) 决定同一能级内的态结构。</h1>
+          <div class="grid hydrogen-energy-layout">
+            <div>
+              <div class="chart-frame hydrogen-energy-chart">
+                <img src="./assets/hydrogen-energy.svg" alt="氢原子离散能级" />
+              </div>
+              <div class="formula boxed energy-formula">
+                \[
+                E_n=-\frac{\mu e^4}{2(4\pi\varepsilon_0)^2\hbar^2}\frac{1}{n^2}
+                =-\frac{13.6\ \mathrm{eV}}{n^2}
+                \]
+              </div>
+            </div>
+            <div>
+              <div class="quantum-number-grid">
+                <div><b>n</b><strong>主量子数</strong><span>\(1,2,3,\ldots\)</span><small>决定能级与整体尺度</small></div>
+                <div><b>l</b><strong>角量子数</strong><span>\(0,\ldots,n-1\)</span><small>决定角动量与形状</small></div>
+                <div><b>m</b><strong>磁量子数</strong><span>\(-l,\ldots,l\)</span><small>标记 \(L_z\) 本征基底</small></div>
+              </div>
+              <div class="degeneracy-block">
+                <span>忽略自旋时，第 \(n\) 层空间简并度</span>
+                <div class="formula">\[
+                g_n=\sum_{l=0}^{n-1}(2l+1)=n^2
+                \]</div>
+              </div>
+              <div class="takeaway">理想库仑势具有额外对称性，所以能量不显含 \(l,m\)；加入外场、精细结构后简并会被打破。</div>
+            </div>
+          </div>
+          <aside class="notes">
+            归一化终止条件给出主量子数 n 和 1 除以 n 平方的能级。对理想非相对论库仑势，能量只依赖 n，因此不同 l 和 m 的态简并。
+          </aside>
+        </section>
+
+        <section data-slide="quantization-synthesis">
+          <div class="kicker">FINAL SYNTHESIS · TWO ROUTES TO QUANTIZATION</div>
+          <h1>量子化不是“直接套公式”，而是允许解必须满足全部物理约束。</h1>
+          <div class="grid synthesis-layout">
+            <div class="synthesis-card">
+              <span>一维无限深势阱</span>
+              <div class="formula">\[F(E)=\psi_E(L)=0\]</div>
+              <ul>
+                <li>左端给定初值，从 \(0\) 积分到 \(L\)</li>
+                <li>只有少数 \(E\) 同时满足右端边界</li>
+                <li>数值上表现为残差函数的离散零点</li>
+              </ul>
+              <strong>边界条件筛选能量</strong>
+            </div>
+            <div class="synthesis-card central">
+              <span>三维库仑中心势</span>
+              <div class="formula">\[\psi_{nlm}=R_{nl}Y_l^m\]</div>
+              <ul>
+                <li>角向极点正则性产生 \(l,m\)</li>
+                <li>径向原点有限、无穷远可归一化</li>
+                <li>级数终止为拉盖尔多项式，产生 \(n\)</li>
+              </ul>
+              <strong>正则性与归一化筛选本征态</strong>
+            </div>
+          </div>
+          <div class="quantization-flow">
+            <span>微分方程</span><b>→</b>
+            <span>边界 / 正则 / 归一化</span><b>→</b>
+            <span>离散量子数</span><b>→</b>
+            <span>允许能量与本征函数</span>
+          </div>
+          <div class="final-demo-row">
+            <div>
+              <strong>从解析式到可视化</strong>
+              <span>现有 Three.js 项目用 \(R_{nl}\) 与 \(Y_l^m\) 对 \(|\psi|^2\) 采样，生成可旋转电子云。</span>
+            </div>
+            <a href="../" target="_blank" rel="noopener">打开氢原子互动项目 ↗</a>
+          </div>
+          <aside class="notes">
+            最后把两部分统一起来。一维势阱靠两端边界筛选能量；氢原子靠角向正则性和径向归一化筛选量子数。两者本质都是微分方程只允许满足全部物理约束的离散本征解。
+          </aside>
+        </section>
+
+        <section data-slide="validation-baseline">
+          <div class="kicker">FINAL CHECK · ANALYTICAL BASELINE</div>
+          <h1>解析解不是数值计算的输入，而是最后验算的真实基准。</h1>
+          <div class="grid validation-route-layout">
+            <div class="route-card analytical">
+              <span>解析路线</span>
+              <div class="route-flow">
+                <b>边界 / 正则 / 归一化</b>
+                <i>→</i>
+                <b>量子数 \(n,l,m\)</b>
+                <i>→</i>
+                <b>闭式能级</b>
+              </div>
+              <div class="formula">\[
+              E_n=\frac{n^2\pi^2}{2L^2},\qquad
+              E_n^{\mathrm H}=-\frac{13.6\ \mathrm{eV}}{n^2}
+              \]</div>
+              <p>解析推导回答“真实本征值应该是多少”。它给误差分析提供标尺。</p>
+            </div>
+            <div class="route-card numerical">
+              <span>数值路线</span>
+              <div class="route-flow">
+                <b>离散矩阵 / 残差函数</b>
+                <i>→</i>
+                <b>线性代数 / 求根</b>
+                <i>→</i>
+                <b>数值能级</b>
+              </div>
+              <div class="formula">\[
+              H\boldsymbol{\psi}=E\boldsymbol{\psi},\qquad
+              F(E)=\psi_E(L)=0
+              \]</div>
+              <p>程序只看离散算符或边界残差，不需要提前知道闭式能级。</p>
+            </div>
+          </div>
+          <div class="takeaway validation-takeaway">差分法和打靶法计算时不代入 \(E_n=n^2\pi^2/2\)；解析公式只用于计算完成后的误差验算。</div>
+          <aside class="notes">
+            这页澄清最容易误解的一点：解析公式不是喂给程序的答案。差分法求矩阵本征值，打靶法求残差零点，解析结果只在最后作为真值基准。
+          </aside>
+        </section>
+
+        <section data-slide="error-taxonomy">
+          <div class="kicker">ERROR SOURCES · CLASSIFICATION</div>
+          <h1>误差来源要先分类，才能判断哪一项真正主导结果。</h1>
+          <div class="error-taxonomy-grid">
+            <div>
+              <b>差分法</b>
+              <strong>\(O(\Delta x^2)\)</strong>
+              <p>二阶导数用中心差分近似，主误差来自泰勒展开中被截断的 \(\Delta x^2\) 项。</p>
+            </div>
+            <div>
+              <b>打靶法</b>
+              <strong>ODE + root tolerance</strong>
+              <p>误差来自积分步长、积分器阶数、根搜索容差，以及右端边界残差的停止标准。</p>
+            </div>
+            <div>
+              <b>有限区间截断</b>
+              <strong>\(x_{\max}, r_{\max}\)</strong>
+              <p>谐振子和径向问题把无穷远截为有限区间；截断太近会改变尾部边界条件。</p>
+            </div>
+            <div>
+              <b>舍入误差</b>
+              <strong>floating point</strong>
+              <p>浮点运算始终存在，但本题能量误差主要不是由舍入误差控制。</p>
+            </div>
+          </div>
+          <div class="takeaway taxonomy-takeaway">对无限深势阱的差分矩阵，边界是精确给定的，主导误差就是二阶导数离散误差。</div>
+          <aside class="notes">
+            误差不是一个笼统词。不同方法的误差来源不同。无限深势阱差分法中没有无穷远截断问题，所以主要看网格离散误差。
+          </aside>
+        </section>
+
+        <section data-slide="discretization-verification">
+          <div class="kicker">CONVERGENCE TEST · DISCRETIZATION ERROR</div>
+          <h1>收敛数据验证了：误差确实按二阶离散误差下降。</h1>
+          <div class="grid convergence-proof-layout">
+            <div>
+              <div class="section-label">\(N=25,50,100,200,400\) 的双对数图</div>
+              <div class="chart-frame convergence-proof-chart">
+                <img src="./assets/convergence.svg" alt="N 从 25 到 400 的二阶收敛验证" />
+              </div>
+            </div>
+            <div>
+              <div class="section-label">倍增关系检查</div>
+              <table class="data-table convergence-proof-table">
+                <thead><tr><th>区间</th><th>\(n=1\)</th><th>\(n=5\)</th></tr></thead>
+                <tbody>
+                  <tr><td>25 → 50</td><td>0.260</td><td>0.262</td></tr>
+                  <tr><td>50 → 100</td><td>0.255</td><td>0.256</td></tr>
+                  <tr><td>100 → 200</td><td>0.253</td><td>0.253</td></tr>
+                  <tr><td>200 → 400</td><td>0.251</td><td>0.251</td></tr>
+                </tbody>
+              </table>
+              <div class="proof-points">
+                <span>网格近似加倍后，误差约变成原来的 1/4。</span>
+                <span>同一网格下，n=5 的误差始终大于 n=1。</span>
+              </div>
+              <div class="takeaway">这不是猜测：数值结果同时验证了二阶收敛和高能级误差放大。</div>
+            </div>
+          </div>
+          <aside class="notes">
+            表中是相邻网格的误差比。每次 N 近似加倍，dx 近似减半，误差比接近四分之一。n=5 误差更大也与解析误差展开中的 n 平方一致。
+          </aside>
+        </section>
+
+        <section data-slide="method-error-scale">
+          <div class="kicker">METHOD SCALE · NUMERICAL ERROR COMPARISON</div>
+          <h1>不同数值方法精度量级不同，适用场景也不同。</h1>
+          <div class="grid method-scale-layout">
+            <div>
+              <div class="section-label">来自 energy_comparison.csv 的误差量级</div>
+              <div class="chart-frame method-scale-chart">
+                <img src="./assets/method-error-scale.svg" alt="差分法和打靶法误差量级对比" />
+              </div>
+              <p class="chart-note">纵轴为对数坐标；势阱打靶法柱使用绝对误差，其他柱使用相对误差百分比。</p>
+            </div>
+            <div>
+              <div class="method-summary-list">
+                <div><b>无限深势阱 · 差分法</b><span>相对误差约 10⁻⁴ 到 10⁻³ 量级，随能级升高放大。</span></div>
+                <div><b>无限深势阱 · 打靶法</b><span>前三个能级绝对误差约 10⁻¹¹，由积分与求根精度控制。</span></div>
+                <div><b>谐振子基态</b><span>差分法约 0.0613%，打靶法约 1.55×10⁻⁸%。</span></div>
+              </div>
+              <div class="takeaway method-final">差分法适合一次求多个本征值，但精度由网格控制；打靶法精度可很高，但通常需要逐个能级搜索，并对复杂问题更敏感。解析解提供误差评估基准。</div>
+            </div>
+          </div>
+          <aside class="notes">
+            最后比较两类方法的量级。差分法方便获得一串本征值，但网格决定精度。打靶法在一维问题中可以非常精确，但要逐个找根，复杂势场中更依赖初值区间和残差行为。
+          </aside>
+        </section>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

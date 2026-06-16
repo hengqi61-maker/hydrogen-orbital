@@ -6,7 +6,19 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "slides:assets": "python3 presentation/marp/scripts/generate_assets.py",
+    "slides:dev": "npm run slides:assets && marp --config presentation/marp/marp.config.mjs --server --watch presentation/marp/slides",
+    "slides:html": "marp --config presentation/marp/marp.config.mjs presentation/marp/slides/numerical-methods.md -o presentation/marp/outputs/numerical-methods.html",
+    "slides:pdf": "marp --config presentation/marp/marp.config.mjs presentation/marp/slides/numerical-methods.md -o presentation/marp/outputs/numerical-methods.pdf",
+    "slides:pptx": "marp --config presentation/marp/marp.config.mjs presentation/marp/slides/numerical-methods.md -o presentation/marp/outputs/numerical-methods.pptx",
+    "slides:images": "rm -rf presentation/marp/outputs/images && mkdir -p presentation/marp/outputs/images && marp --config presentation/marp/marp.config.mjs presentation/marp/slides/numerical-methods.md --images png -o presentation/marp/outputs/images/slide.png",
+    "slides:build": "npm run slides:assets && npm run slides:html && npm run slides:pdf && npm run slides:pptx && npm run slides:images",
+    "pre:dev": "npm --prefix presentation/web-pre run dev",
+    "pre:build": "npm --prefix presentation/web-pre run build",
+    "pre:preview": "npm --prefix presentation/web-pre run preview",
+    "pre:pptx-editable": "node presentation/web-pre/scripts/export-editable-pptx.mjs",
+    "pages:build": "npm run build && npm run pre:build && node presentation/web-pre/scripts/build-pages.mjs"
   },
   "dependencies": {
     "lil-gui": "^0.20.0",
@@ -15,10 +27,11 @@
     "three": "^0.179.1"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^5.0.0",
+    "@marp-team/marp-cli": "4.4.0",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
     "@types/three": "^0.179.0",
+    "@vitejs/plugin-react": "^5.0.0",
     "typescript": "~5.8.3",
     "vite": "^7.1.0"
   }
