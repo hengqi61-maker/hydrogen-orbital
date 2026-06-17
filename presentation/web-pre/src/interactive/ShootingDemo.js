@@ -41,6 +41,46 @@ function dot(radius, color) {
   );
 }
 
+function cssColor(color) {
+  return `#${color.toString(16).padStart(6, "0")}`;
+}
+
+function textLabel(text, {
+  color = COLORS.ink,
+  fontSize = 34,
+  height = 0.18,
+  fontWeight = 650,
+  align = "center",
+} = {}) {
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  context.font = `${fontWeight} ${fontSize}px "Helvetica Neue", "PingFang SC", Arial, sans-serif`;
+  const metrics = context.measureText(text);
+  const paddingX = 18;
+  const paddingY = 10;
+  canvas.width = Math.ceil(metrics.width + paddingX * 2);
+  canvas.height = Math.ceil(fontSize + paddingY * 2);
+  context.font = `${fontWeight} ${fontSize}px "Helvetica Neue", "PingFang SC", Arial, sans-serif`;
+  context.fillStyle = cssColor(color);
+  context.textAlign = align;
+  context.textBaseline = "middle";
+  const x = align === "left" ? paddingX : align === "right" ? canvas.width - paddingX : canvas.width / 2;
+  context.fillText(text, x, canvas.height / 2);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const material = new THREE.SpriteMaterial({ map: texture, transparent: true });
+  const sprite = new THREE.Sprite(material);
+  sprite.scale.set(height * canvas.width / canvas.height, height, 1);
+  return sprite;
+}
+
+function addTextLabel(group, text, x, y, options = {}) {
+  const sprite = textLabel(text, options);
+  sprite.position.set(x, y, options.z ?? 0.09);
+  group.add(sprite);
+  return sprite;
+}
+
 function panelFrame(x, y, width, height) {
   const group = new THREE.Group();
   const fill = new THREE.Mesh(
@@ -73,6 +113,33 @@ class PlotPanel {
       new THREE.Vector3(x, y, 0),
       new THREE.Vector3(x, y + height, 0),
     ], COLORS.grid));
+  }
+
+  addTickX(value, label, color = COLORS.muted ?? COLORS.ink) {
+    const x = this.mapX(value);
+    this.group.add(line([
+      new THREE.Vector3(x, this.mapY(0) - 0.055, 0.03),
+      new THREE.Vector3(x, this.mapY(0) + 0.055, 0.03),
+    ], color));
+    addTextLabel(this.group, label, x, this.y - 0.2, {
+      color,
+      fontSize: 42,
+      height: 0.24,
+    });
+  }
+
+  addTickY(value, label, color = COLORS.muted ?? COLORS.ink) {
+    const y = this.mapY(value);
+    this.group.add(line([
+      new THREE.Vector3(this.x - 0.045, y, 0.03),
+      new THREE.Vector3(this.x + 0.045, y, 0.03),
+    ], color));
+    addTextLabel(this.group, label, this.x - 0.22, y, {
+      color,
+      fontSize: 38,
+      height: 0.22,
+      align: "right",
+    });
   }
 
   mapX(value) {
@@ -136,10 +203,12 @@ export class ShootingDemo {
         new THREE.Vector3(this.wavePanel.mapX(1), this.wavePanel.y, 0),
         new THREE.Vector3(this.wavePanel.mapX(1), this.wavePanel.y + this.wavePanel.height, 0),
       ], COLORS.blue));
+      this.decorateWavePanel();
 
       this.residualPanel.group.add(line(this.residualCurve.map(({ energy, residual }) =>
         new THREE.Vector3(this.residualPanel.mapX(energy), this.residualPanel.mapY(residual), 0.02)
       ), COLORS.blue));
+      this.decorateResidualPanel();
 
       for (const eigen of this.eigenvalues) {
         const x = this.residualPanel.mapX(eigen.energy);
@@ -150,6 +219,12 @@ export class ShootingDemo {
         const marker = dot(0.055, COLORS.orange);
         marker.position.set(x, this.residualPanel.mapY(0), 0.05);
         this.residualPanel.group.add(marker);
+        addTextLabel(this.residualPanel.group, `E${eigen.n}`, eigen.n === 1 ? x + 0.28 : x, eigen.n === 1 ? this.residualPanel.mapY(0) + 0.28 : this.residualPanel.y + this.residualPanel.height + 0.18, {
+          color: COLORS.orange,
+          fontSize: 42,
+          height: 0.22,
+          align: eigen.n === 1 ? "left" : "center",
+        });
       }
 
       this.waveHit = dot(0.075, COLORS.orange);
@@ -167,6 +242,52 @@ export class ShootingDemo {
       this.useFallback = true;
       this.root.dataset.renderer = "svg-fallback";
     }
+  }
+
+  decorateWavePanel() {
+    this.wavePanel.addTickX(0, "x=0", COLORS.ink);
+    this.wavePanel.addTickX(1, "x=L", COLORS.blue);
+    this.wavePanel.addTickY(0, "ψ=0", COLORS.ink);
+    addTextLabel(this.wavePanel.group, "位置 x", this.wavePanel.x + this.wavePanel.width / 2, this.wavePanel.y - 0.43, {
+      color: COLORS.ink,
+      fontSize: 44,
+      height: 0.25,
+    });
+    addTextLabel(this.wavePanel.group, "波函数  ψ(x)", this.wavePanel.x + 0.1, this.wavePanel.y + this.wavePanel.height + 0.18, {
+      color: COLORS.ink,
+      fontSize: 44,
+      height: 0.25,
+      align: "left",
+    });
+    addTextLabel(this.wavePanel.group, "右边界 x=L", this.wavePanel.mapX(1) - 0.42, this.wavePanel.y + this.wavePanel.height - 0.22, {
+      color: COLORS.blue,
+      fontSize: 40,
+      height: 0.22,
+      align: "right",
+    });
+  }
+
+  decorateResidualPanel() {
+    this.residualPanel.addTickX(this.eMin, "E=0", COLORS.ink);
+    this.residualPanel.addTickX(this.eMax, "E=50", COLORS.ink);
+    this.residualPanel.addTickY(0, "0", COLORS.ink);
+    addTextLabel(this.residualPanel.group, "猜测能量 E", this.residualPanel.x + this.residualPanel.width / 2, this.residualPanel.y - 0.43, {
+      color: COLORS.ink,
+      fontSize: 44,
+      height: 0.25,
+    });
+    addTextLabel(this.residualPanel.group, "残差  F(E)=ψE(L)", this.residualPanel.x + 0.1, this.residualPanel.y + this.residualPanel.height + 0.18, {
+      color: COLORS.ink,
+      fontSize: 44,
+      height: 0.25,
+      align: "left",
+    });
+    addTextLabel(this.residualPanel.group, "零点：允许能量", this.residualPanel.x + this.residualPanel.width - 0.12, this.residualPanel.mapY(0) + 0.18, {
+      color: COLORS.orange,
+      fontSize: 40,
+      height: 0.22,
+      align: "right",
+    });
   }
 
   bindControls() {
@@ -327,8 +448,25 @@ export class ShootingDemo {
         <rect x="555" y="20" width="470" height="235" fill="#f8f9fb" stroke="#d8dee7"/>
         <line x1="25" y1="160" x2="495" y2="160" stroke="#28425d"/>
         <line x1="555" y1="160" x2="1025" y2="160" stroke="#28425d"/>
+        <line x1="25" y1="20" x2="25" y2="255" stroke="#d8dee7"/>
+        <line x1="555" y1="20" x2="555" y2="255" stroke="#d8dee7"/>
+        <text x="30" y="15" fill="#28425d" font-size="18" font-weight="650">波函数 ψ(x)</text>
+        <text x="260" y="284" fill="#28425d" font-size="18" font-weight="650" text-anchor="middle">位置 x</text>
+        <text x="25" y="274" fill="#28425d" font-size="15" text-anchor="middle">x=0</text>
+        <text x="490" y="274" fill="#0071e3" font-size="15" text-anchor="middle">x=L</text>
+        <text x="505" y="42" fill="#0071e3" font-size="15" text-anchor="end">右边界 x=L</text>
+        <text x="560" y="15" fill="#28425d" font-size="18" font-weight="650">残差 F(E)=ψ_E(L)</text>
+        <text x="790" y="284" fill="#28425d" font-size="18" font-weight="650" text-anchor="middle">猜测能量 E</text>
+        <text x="555" y="274" fill="#28425d" font-size="15" text-anchor="middle">E=0</text>
+        <text x="1025" y="274" fill="#28425d" font-size="15" text-anchor="middle">E=50</text>
+        <text x="1015" y="150" fill="#d86600" font-size="15" text-anchor="end">F(E)=0 零点</text>
         <path d="${wave}" fill="none" stroke="${color}" stroke-width="2"/>
         <path d="${residualPath}" fill="none" stroke="#0071e3" stroke-width="2"/>
+        ${this.eigenvalues.map((eigen) => {
+          const x = 560 + (eigen.energy - this.eMin) / (this.eMax - this.eMin) * 460;
+          return `<line x1="${x}" y1="20" x2="${x}" y2="255" stroke="#d86600" stroke-dasharray="7 7" opacity="0.5"/>
+            <text x="${x}" y="38" fill="#d86600" font-size="15" text-anchor="middle">E${eigen.n}</text>`;
+        }).join("")}
         <circle cx="490" cy="${160 - residual * 115}" r="6" fill="${color}"/>
         <circle cx="${currentX}" cy="${currentY}" r="6" fill="${color}"/>
       </svg>`;
