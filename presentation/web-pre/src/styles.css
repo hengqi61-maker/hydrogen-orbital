@@ -2000,6 +2000,342 @@ input {
   }
 }
 
+@media (max-width: 700px) {
+  html,
+  body {
+    min-height: 100%;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    background: var(--paper);
+  }
+
+  .reveal-viewport {
+    height: auto;
+    min-height: 100dvh;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+  }
+
+  .reveal {
+    width: 100%;
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+    background: var(--paper);
+    font-size: 16px;
+  }
+
+  .reveal .slides {
+    position: relative !important;
+    inset: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 100dvh;
+    margin: 0 !important;
+    overflow: visible;
+    transform: none !important;
+    text-align: left;
+  }
+
+  .reveal .slides section {
+    position: relative !important;
+    inset: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 100dvh;
+    padding: max(20px, env(safe-area-inset-top)) 18px
+      calc(82px + env(safe-area-inset-bottom));
+    overflow: visible;
+    transform: none !important;
+  }
+
+  .reveal .slides section:not(.present) {
+    display: none !important;
+  }
+
+  .reveal .slides section.present {
+    display: block !important;
+  }
+
+  .reveal h1 {
+    max-width: none;
+    margin: 8px 0 20px;
+    font-size: 28px;
+    font-weight: 650;
+    line-height: 1.22;
+    letter-spacing: 0;
+  }
+
+  .reveal h2,
+  .reveal h3,
+  .reveal p,
+  .reveal span,
+  .reveal b,
+  .reveal strong,
+  .reveal small,
+  .kicker,
+  .section-label {
+    letter-spacing: 0;
+  }
+
+  .reveal p {
+    font-size: 15px;
+    line-height: 1.62;
+  }
+
+  .kicker,
+  .section-label {
+    font-size: 11px;
+  }
+
+  .grid,
+  .matrix-layout,
+  .results-layout,
+  .error-layout,
+  .shooting-principle-layout,
+  .root-layout,
+  .comparison-layout,
+  .separation-layout,
+  .phi-layout,
+  .legendre-layout,
+  .harmonics-layout,
+  .radial-layout,
+  .asymptotic-layout,
+  .laguerre-layout,
+  .hydrogen-energy-layout,
+  .synthesis-layout,
+  .validation-route-layout,
+  .convergence-proof-layout,
+  .method-scale-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 26px;
+  }
+
+  .panel,
+  .boxed,
+  .matrix-panel,
+  .operator-panel {
+    max-width: 100%;
+  }
+
+  .formula {
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    font-size: 16px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .formula .katex-display {
+    min-width: max-content;
+    margin: 0.55em 0;
+    padding: 0 2px 5px;
+    text-align: left;
+  }
+
+  .chart-frame,
+  .chart-frame.tall,
+  .chart-frame.convergence,
+  .chart-frame.shooting-static,
+  .chart-frame.residual-chart,
+  .chart-frame.comparison-chart,
+  .chart-frame.legendre-chart,
+  .chart-frame.radial-probability-chart,
+  .chart-frame.hydrogen-energy-chart,
+  .chart-frame.effective-chart,
+  .chart-frame.convergence-proof-chart,
+  .chart-frame.method-scale-chart {
+    width: 100%;
+    height: auto;
+    min-height: 220px;
+  }
+
+  .chart-frame img {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+  }
+
+  .data-table,
+  .comparison-table,
+  .shooting-table,
+  .factor-table,
+  .convergence-proof-table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .data-table th,
+  .data-table td,
+  .comparison-table th,
+  .comparison-table td {
+    padding: 10px 9px;
+    font-size: 13px;
+  }
+
+  .verify-block,
+  .error-order {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .micro-points,
+  .proof-points,
+  .quantum-number-grid,
+  .error-taxonomy-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .central-transition-layout,
+  .analysis-roadmap {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .transition-arrow,
+  .analysis-roadmap > i {
+    transform: rotate(90deg);
+    justify-self: center;
+  }
+
+  .demo-labels {
+    display: none;
+  }
+
+  #interactive-slide h1 {
+    margin-bottom: 16px;
+  }
+
+  .shooting-demo {
+    height: 650px;
+    min-height: 0;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .shooting-fallback {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .shooting-fallback svg {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .demo-controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    margin-top: 14px;
+  }
+
+  .readout {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr);
+  }
+
+  .readout > div {
+    min-height: 58px;
+    padding: 9px 10px;
+  }
+
+  .readout > div:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .readout span {
+    font-size: 10px;
+  }
+
+  .readout strong {
+    font-size: 13px;
+    white-space: normal;
+  }
+
+  .control-rail {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .demo-controls button {
+    min-height: 46px;
+    padding: 0 14px;
+    font-size: 14px;
+    touch-action: manipulation;
+  }
+
+  .control-rail label {
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 7px;
+    font-size: 12px;
+  }
+
+  .control-rail input {
+    width: 100%;
+    min-width: 0;
+    height: 38px;
+  }
+
+  .shortcut-hint {
+    display: none;
+  }
+
+  .snap-rail {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .demo-footer {
+    display: grid;
+    justify-content: stretch;
+    gap: 7px;
+    margin-top: 14px;
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  .demo-footer > span:last-of-type {
+    display: none;
+  }
+
+  .demo-link {
+    display: block;
+    min-height: 44px;
+    padding: 12px 10px;
+    text-align: center;
+  }
+
+  .reveal .controls {
+    position: fixed;
+    right: 5px;
+    bottom: calc(8px + env(safe-area-inset-bottom));
+    transform: scale(0.72);
+  }
+
+  .reveal .progress {
+    height: 3px;
+  }
+
+  .reveal .slide-number {
+    position: fixed;
+    right: 17px;
+    bottom: calc(8px + env(safe-area-inset-bottom));
+    font-size: 11px;
+  }
+}
+
 @media print {
   .reveal .slides section {
     box-shadow: none;

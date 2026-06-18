@@ -182,6 +182,14 @@ export class ShootingDemo {
   }
 
   initializeRenderer() {
+    if (window.matchMedia("(max-width: 700px)").matches) {
+      this.canvas.hidden = true;
+      this.fallback.hidden = false;
+      this.useFallback = true;
+      this.root.dataset.renderer = "svg-mobile";
+      return;
+    }
+
     try {
       this.scene = new THREE.Scene();
       this.scene.background = new THREE.Color(0xffffff);
@@ -330,6 +338,10 @@ export class ShootingDemo {
   }
 
   resize() {
+    if (this.useFallback) {
+      this.renderFallback();
+      return;
+    }
     if (!this.renderer) return;
     const width = Math.max(this.root.clientWidth, 1);
     const height = Math.max(this.root.clientHeight, 1);
@@ -434,6 +446,10 @@ export class ShootingDemo {
 
   renderFallback() {
     const { xValues, psiValues, residual, isHit } = this.currentSolution;
+    if (this.root.clientWidth <= 700) {
+      this.renderMobileFallback({ xValues, psiValues, residual, isHit });
+      return;
+    }
     const wave = svgPath([...xValues], (value) => 30 + value * 460,
       (_, index) => 160 - psiValues[index] * 115);
     const residualPath = svgPath(this.residualCurve,
@@ -469,6 +485,58 @@ export class ShootingDemo {
         }).join("")}
         <circle cx="490" cy="${160 - residual * 115}" r="6" fill="${color}"/>
         <circle cx="${currentX}" cy="${currentY}" r="6" fill="${color}"/>
+      </svg>`;
+  }
+
+  renderMobileFallback({ xValues, psiValues, residual, isHit }) {
+    const left = 42;
+    const right = 358;
+    const width = right - left;
+    const waveTop = 44;
+    const residualTop = 365;
+    const panelHeight = 230;
+    const waveZero = waveTop + 135;
+    const residualZero = residualTop + 135;
+    const wave = svgPath(
+      [...xValues],
+      (value) => left + value * width,
+      (_, index) => waveZero - psiValues[index] * 102,
+    );
+    const residualPath = svgPath(
+      this.residualCurve,
+      (value) => left + (value.energy - this.eMin) / (this.eMax - this.eMin) * width,
+      (value) => residualZero - value.residual * 102,
+    );
+    const currentX = left + (this.state.energy - this.eMin) / (this.eMax - this.eMin) * width;
+    const currentY = residualZero - residual * 102;
+    const color = isHit ? "#248a3d" : "#d86600";
+
+    this.fallback.innerHTML = `
+      <svg viewBox="0 0 400 650" role="img" aria-label="打靶法移动端互动图">
+        <rect x="${left}" y="${waveTop}" width="${width}" height="${panelHeight}" rx="4" fill="#f8f9fb" stroke="#d8dee7"/>
+        <line x1="${left}" y1="${waveZero}" x2="${right}" y2="${waveZero}" stroke="#28425d"/>
+        <line x1="${left}" y1="${waveTop}" x2="${left}" y2="${waveTop + panelHeight}" stroke="#d8dee7"/>
+        <line x1="${right}" y1="${waveTop}" x2="${right}" y2="${waveTop + panelHeight}" stroke="#0071e3" stroke-dasharray="6 6" opacity="0.7"/>
+        <text x="${left}" y="26" fill="#28425d" font-size="16" font-weight="650">波函数 ψ(x)</text>
+        <text x="${left}" y="${waveTop + panelHeight + 22}" fill="#28425d" font-size="13">x=0</text>
+        <text x="${right}" y="${waveTop + panelHeight + 22}" fill="#0071e3" font-size="13" text-anchor="end">右边界 x=L</text>
+        <path d="${wave}" fill="none" stroke="${color}" stroke-width="2.4"/>
+        <circle cx="${right}" cy="${waveZero - residual * 102}" r="6" fill="${color}"/>
+
+        <rect x="${left}" y="${residualTop}" width="${width}" height="${panelHeight}" rx="4" fill="#f8f9fb" stroke="#d8dee7"/>
+        <line x1="${left}" y1="${residualZero}" x2="${right}" y2="${residualZero}" stroke="#28425d"/>
+        <line x1="${left}" y1="${residualTop}" x2="${left}" y2="${residualTop + panelHeight}" stroke="#d8dee7"/>
+        <text x="${left}" y="${residualTop - 18}" fill="#28425d" font-size="16" font-weight="650">残差 F(E)=ψE(L)</text>
+        <text x="${left}" y="${residualTop + panelHeight + 22}" fill="#28425d" font-size="13">E=0</text>
+        <text x="${right}" y="${residualTop + panelHeight + 22}" fill="#28425d" font-size="13" text-anchor="end">E=50</text>
+        <path d="${residualPath}" fill="none" stroke="#0071e3" stroke-width="2.4"/>
+        ${this.eigenvalues.map((eigen) => {
+          const x = left + (eigen.energy - this.eMin) / (this.eMax - this.eMin) * width;
+          return `<line x1="${x}" y1="${residualTop}" x2="${x}" y2="${residualTop + panelHeight}" stroke="#d86600" stroke-dasharray="6 6" opacity="0.45"/>
+            <text x="${x}" y="${residualTop + 18}" fill="#d86600" font-size="12" text-anchor="middle">E${eigen.n}</text>`;
+        }).join("")}
+        <circle cx="${currentX}" cy="${currentY}" r="6" fill="${color}"/>
+        <text x="${right}" y="${residualZero - 10}" fill="#d86600" font-size="12" text-anchor="end">零点：允许能量</text>
       </svg>`;
   }
 
